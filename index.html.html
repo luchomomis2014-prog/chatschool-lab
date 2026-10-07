@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChatSchool Lab · RED interactivo</title>
+<style>
+:root{
+  --bg:#020409; --bg2:#050b14; --card:#080f1a; --card2:#0d1725;
+  --text:#f3f7fb; --muted:#7f93a8; --cyan:#38d9ff; --violet:#8b7cff;
+  --green:#3ee49a; --red:#ff6b7a; --yellow:#ffd166; --line:#1b2a3b;
+  --shadow:0 22px 60px rgba(0,0,0,.28);
+  --radius:22px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+ margin:0; min-height:100vh; color:var(--text);
+ font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
+ background:
+ radial-gradient(circle at 10% 10%,rgba(56,217,255,.14),transparent 30%),
+ radial-gradient(circle at 90% 15%,rgba(139,124,255,.16),transparent 28%),
+ linear-gradient(135deg,var(--bg),var(--bg2));
+}
+body:before{
+ content:""; position:fixed; inset:0; pointer-events:none; opacity:.18;
+ background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),
+ linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+ background-size:36px 36px;
+}
+.wrap{width:min(1080px,calc(100% - 32px));margin:auto;padding:28px 0 70px;position:relative}
+.top{
+ display:flex;align-items:center;justify-content:space-between;gap:20px;
+ padding:22px 24px;margin-bottom:20px;border:1px solid var(--line);
+ border-radius:26px;background:rgba(5,10,17,.88);backdrop-filter:blur(18px);
+ box-shadow:var(--shadow);
+}
+.brand{display:flex;gap:15px;align-items:center}
+.logo{
+ width:54px;height:54px;border-radius:17px;display:grid;place-items:center;
+ font-size:28px;background:linear-gradient(135deg,var(--cyan),var(--violet));
+ box-shadow:0 10px 30px rgba(56,217,255,.18);
+}
+.eyebrow{margin:0;color:var(--cyan);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+h1{margin:4px 0 0;font-size:clamp(22px,4vw,34px);line-height:1.1}
+.status{
+ padding:9px 13px;border:1px solid var(--line);border-radius:999px;
+ color:var(--muted);font-size:12px;white-space:nowrap;background:#050a11;
+}
+.progress{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:20px}
+.progress .step{
+ border:1px solid var(--line);border-radius:14px;padding:11px 7px;text-align:center;
+ font-size:11px;font-weight:800;color:var(--muted);background:rgba(7,13,22,.86);
+ transition:.25s;
+}
+.progress .step.active{color:#06111d;border-color:var(--cyan);background:var(--cyan);transform:translateY(-2px);box-shadow:0 8px 24px rgba(56,217,255,.2)}
+.progress .step.done{color:#062016;border-color:var(--green);background:var(--green)}
+.screen{
+ display:none;border:1px solid var(--line);border-radius:var(--radius);
+ background:linear-gradient(145deg,rgba(7,13,22,.98),rgba(3,8,14,.99));
+ padding:clamp(22px,4vw,38px);box-shadow:var(--shadow);
+ animation:rise .35s ease;
+}
+.screen.active{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.screen-title{font-size:clamp(22px,4vw,30px);margin:0 0 8px}
+.lead{color:#c4d4e4;font-size:16px;margin:0 0 22px}
+.instr{
+ padding:13px 16px;border:1px solid rgba(56,217,255,.22);border-left:4px solid var(--cyan);
+ border-radius:14px;background:rgba(56,217,255,.06);color:#cbefff;margin:0 0 22px;
+}
+.req-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.req-card{
+ padding:20px;border-radius:18px;border:1px solid var(--line);
+ background:linear-gradient(135deg,#112b45,#0c2034);position:relative;overflow:hidden;
+}
+.req-card:after{content:"";position:absolute;width:90px;height:90px;right:-35px;top:-35px;border-radius:50%;background:rgba(56,217,255,.08)}
+.req-label{font-size:11px;text-transform:uppercase;color:var(--cyan);font-weight:900;letter-spacing:.08em;margin-bottom:7px}
+.req-need{font-size:15px;font-weight:700}
+.btn-row{display:flex;gap:11px;flex-wrap:wrap;margin-top:26px}
+.btn{
+ border:0;border-radius:13px;padding:12px 18px;font-weight:900;font-size:14px;cursor:pointer;
+ color:#06111d;background:linear-gradient(135deg,var(--cyan),#76e8ff);
+ box-shadow:0 10px 25px rgba(56,217,255,.16);transition:.2s;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
+.btn.secondary{color:var(--text);background:#080e17;border:1px solid var(--line);box-shadow:none}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.device-list{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.device-card{border:1px solid var(--line);border-radius:19px;overflow:hidden;background:#070d16}
+.device-head{
+ width:100%;display:flex;align-items:center;gap:12px;padding:17px;border:0;
+ background:transparent;color:var(--text);text-align:left;cursor:pointer;
+}
+.device-head:hover{background:rgba(56,217,255,.05)}
+.device-icon{
+ width:45px;height:45px;border-radius:14px;display:grid;place-items:center;font-size:23px;
+ background:linear-gradient(135deg,#0b1827,#11182a);border:1px solid var(--line)
+}
+.device-name{font-weight:900;font-size:14px}.device-sub{color:var(--muted);font-size:11px}
+.chevron{margin-left:auto;color:var(--cyan)}
+.device-body{display:none;padding:0 17px 18px;border-top:1px solid var(--line)}
+.device-body.open{display:block}
+.specs{width:100%;border-collapse:collapse;font-size:13px}
+.specs td{padding:10px 4px;border-bottom:1px solid rgba(39,66,93,.55);vertical-align:top}
+.specs td:first-child{color:var(--muted);width:45%}.specs td:last-child{font-weight:700}
+.check-row,.match-row{
+ border:1px solid var(--line);border-radius:15px;padding:14px;margin-bottom:10px;
+ background:#070d16;transition:.25s
+}
+.check-row{display:flex;align-items:flex-start;gap:12px;opacity:.28}
+.check-row.show{opacity:1}.check-row.ok{background:rgba(62,228,154,.08);border-color:rgba(62,228,154,.4)}
+.check-badge{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#062016;font-weight:900;flex:none}
+.check-text b{color:#fff}.expl{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.match-row{display:grid;grid-template-columns:1fr 1fr;gap:15px;align-items:center}
+.match-label{font-weight:900}.match-label small{display:block;color:var(--muted);font-size:11px;font-weight:500;margin-top:4px}
+.match-select{
+ width:100%;padding:11px;border-radius:12px;border:1px solid var(--line);background:#040910;color:var(--text);
+ font-size:13px
+}
+.match-select option{background:#040910;color:var(--text)}
+.match-select.correct{border-color:var(--green);background:rgba(62,228,154,.09)}
+.match-select.incorrect{border-color:var(--red);background:rgba(255,107,122,.09)}
+.verdict-line{font-size:11px;margin-top:5px}.verdict-line.ok{color:var(--green)}.verdict-line.bad{color:var(--red)}
+.feedback-box,.conclusion{margin-top:15px;padding:14px 16px;border-radius:15px;display:none}
+.feedback-box.show,.conclusion.show{display:block}
+.feedback-box.ok,.conclusion.ok{background:rgba(62,228,154,.09);border:1px solid rgba(62,228,154,.35);color:#9df4c8}
+.feedback-box.bad,.conclusion.bad{background:rgba(255,107,122,.08);border:1px solid rgba(255,107,122,.35);color:#ffadb7}
+.case-box{
+ padding:20px;border-radius:18px;border:1px solid rgba(255,209,102,.28);
+ background:rgba(255,209,102,.06);color:#ffe9a8;margin-bottom:18px
+}
+.option{
+ display:block;width:100%;text-align:left;padding:16px;margin-bottom:11px;
+ border:1px solid var(--line);border-radius:15px;background:#070d16;color:var(--text);
+ cursor:pointer;font-size:14px;transition:.2s
+}
+.option:hover{border-color:var(--cyan);transform:translateX(3px)}
+.option.chosen-correct{border-color:var(--green);background:rgba(62,228,154,.09)}
+.option.chosen-incorrect{border-color:var(--red);background:rgba(255,107,122,.08)}
+.option-expl{font-size:12px;margin:-3px 0 12px 3px;display:none}.option-expl.show{display:block}.option-expl.ok{color:var(--green)}.option-expl.bad{color:var(--red)}
+.score-panel{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}
+.score-card{text-align:center;padding:22px;border:1px solid var(--line);border-radius:18px;background:#070d16}
+.score-num{font-size:34px;font-weight:950;color:var(--cyan)}.score-lbl{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.evidence-box{padding:17px;border-radius:16px;border-left:4px solid var(--yellow);background:rgba(255,209,102,.06);color:#f7df9b}
+.license-note{margin-top:25px;padding-top:15px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+@media(max-width:800px){.device-list{grid-template-columns:1fr}.top{align-items:flex-start}.status{display:none}}
+@media(max-width:600px){.wrap{width:min(100% - 20px,1080px)}.progress{grid-template-columns:repeat(3,1fr)}.req-grid,.score-panel{grid-template-columns:1fr}.match-row{grid-template-columns:1fr}.screen{padding:22px}.top{padding:18px}.logo{width:46px;height:46px}}
+
+/* --- acabado DARK MODE --- */
+.screen, .top, .device-card, .req-card, .check-row, .match-row, .score-card, .option {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025), 0 14px 35px rgba(0,0,0,.22);
+}
+.top { box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 18px 45px rgba(0,0,0,.38); }
+.screen-title { text-shadow: 0 0 22px rgba(56,217,255,.08); }
+.device-card:hover { border-color: rgba(56,217,255,.38); }
+.req-card:hover { border-color: rgba(139,124,255,.38); transform: translateY(-2px); transition:.2s; }
+.progress .step { box-shadow: inset 0 1px 0 rgba(255,255,255,.025); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+ <div class="brand">
+  <div class="logo">⚡</div>
+  <div>
+   <p class="eyebrow">RED · Tecnología e Informática · 10.º–11.º</p>
+   <h1>ChatSchool Lab</h1>
+  </div>
+ </div>
+ <div class="status">● Laboratorio interactivo</div>
+</header>
+
+<nav class="progress" aria-label="Progreso del recorrido">
+ <div class="step" data-step="inicio">Inicio</div>
+ <div class="step" data-step="exploracion">Exploración</div>
+ <div class="step" data-step="ejemplo">Ejemplo</div>
+ <div class="step" data-step="actividad">Actividad</div>
+ <div class="step" data-step="retro">Retroalimentación</div>
+ <div class="step" data-step="cierre">Cierre</div>
+</nav>
+
+<div aria-live="polite" class="sr-only" id="live-region"></div>
+
+<section class="screen" id="screen-inicio" data-name="inicio">
+ <h2 class="screen-title">🚀 ¿Enciende o no enciende?</h2>
+ <p class="lead">Descubre qué necesita una aplicación para funcionar correctamente en distintos dispositivos.</p>
+ <div class="instr">🎯 <strong>Misión:</strong> comprobar si <strong>ChatSchool</strong> puede funcionar en los equipos del colegio.</div>
+ <div class="req-grid">
+  <div class="req-card"><div class="req-label">Sistema operativo</div><div class="req-need">Android 9+ · Windows 10+</div></div>
+  <div class="req-card"><div class="req-label">Memoria RAM</div><div class="req-need">2 GB mínimo</div></div>
+  <div class="req-card"><div class="req-label">Almacenamiento</div><div class="req-need">500 MB mínimo</div></div>
+  <div class="req-card"><div class="req-label">Conexión</div><div class="req-need">Wi-Fi o datos móviles</div></div>
+ </div>
+ <div class="btn-row"><button class="btn" onclick="goTo('exploracion')">Comenzar</button></div>
+</section>
+
+<section class="screen" id="screen-exploracion" data-name="exploracion">
+ <h2 class="screen-title">🧩 Explora los dispositivos</h2>
+ <p class="lead">Explora cada dispositivo antes de continuar.</p>
+ <div class="device-list" id="device-list"></div>
+ <div class="btn-row">
+  <button class="btn secondary" onclick="goTo('inicio')">← Volver</button>
+  <button class="btn" onclick="goTo('ejemplo')">Ver ejemplo resuelto →</button>
+ </div>
+</section>
+
+<section class="screen" id="screen-ejemplo" data-name="ejemplo">
+ <h2 class="screen-title">🔎 Ejemplo resuelto</h2>
+ <p class="lead">Observa cómo se compara cada requisito con los datos de la Tablet institucional T1.</p>
+ <div id="example-checks"></div>
+ <div class="btn-row">
+  <button class="btn secondary" onclick="goTo('exploracion')">← Volver</button>
+  <button class="btn" id="btn-to-activity" onclick="goTo('actividad')">Ir a la actividad</button>
+ </div>
+</section>
+
+<section class="screen" id="screen-actividad" data-name="actividad">
+ <h2 class="screen-title" id="activity-title">🎮 Tu turno: relaciona</h2>
+ <p class="lead" id="activity-lead"></p>
+ <p class="instr">💡 Selecciona el dato que corresponde a cada requisito y después pulsa <strong>Verificar</strong>.</p>
+ <div id="activity-matches"></div>
+ <div class="feedback-box" id="activity-feedback"></div>
+ <div class="conclusion" id="activity-conclusion"></div>
+ <div class="btn-row">
+  <button class="btn secondary" onclick="verifyMatches()">✓ Verificar</button>
+  <button class="btn" id="btn-activity-next" onclick="nextActivityStage()" disabled>Continuar</button>
+ </div>
+</section>
+
+<section class="screen" id="screen-retro" data-name="retro">
+ <h2 class="screen-title">🛠️ Caso de incompatibilidad</h2>
+ <div class="case-box">El computador <strong>PC-14</strong> solo tiene <strong>180 MB</strong> libres y ChatSchool necesita <strong>500 MB</strong>. ¿Qué harías para poder instalar la aplicación?</div>
+ <div id="options-list"></div>
+ <div class="btn-row">
+  <button class="btn secondary" onclick="goTo('actividad')">← Volver</button>
+  <button class="btn" id="btn-to-cierre" onclick="goTo('cierre')" disabled>Ir al cierre →</button>
+ </div>
+</section>
+
+<section class="screen" id="screen-cierre" data-name="cierre">
+ <h2 class="screen-title">🏆 Misión completada</h2>
+ <div class="score-panel">
+  <div class="score-card"><div class="score-num" id="score-matches">0/8</div><div class="score-lbl">Relaciones correctas</div></div>
+  <div class="score-card"><div class="score-num" id="score-case">—</div><div class="score-lbl">Caso resuelto al 1.er intento</div></div>
+ </div>
+ <p class="lead" id="closing-msg"></p>
+ <div class="evidence-box">📌 <strong>Evidencia:</strong> entrega además el <strong>diagrama de componentes</strong> y la <strong>solución argumentada</strong> del caso de incompatibilidad, en papel o documento físico, como lo pide el reto.</div>
+ <div class="btn-row"><button class="btn secondary" onclick="restart()">↻ Reiniciar recorrido</button></div>
+ <p class="license-note">Licencia de este RED: CC BY-NC · Autoría propia · Datos de los dispositivos ficticios, con fines didácticos.</p>
+</section>
+</div>
+
+<script>
+
+/* ---------------- DATA ---------------- */
+const requirements = [
+  {id:'so',  label:'Sistema operativo',  need:'Android 9+ / Windows 10+'},
+  {id:'ram', label:'Memoria RAM',        need:'2 GB mínimo'},
+  {id:'alm', label:'Almacenamiento libre', need:'500 MB mínimo'},
+  {id:'con', label:'Conexión',           need:'Wi-Fi o datos móviles'}
+];
+
+const devices = {
+  A: {
+    name:'Tablet institucional T1', icon:'📱', tag:'Ejemplo resuelto',
+    specs:{ so:'Android 11', ram:'3 GB', alm:'1.2 GB libres', con:'Wi-Fi del colegio' },
+    cumple:{ so:true, ram:true, alm:true, con:true }
+  },
+  B: {
+    name:'Celular de gama básica', icon:'📞', tag:'Dispositivo de un estudiante',
+    specs:{ so:'Android 9', ram:'2 GB', alm:'700 MB libres', con:'Datos móviles' },
+    cumple:{ so:true, ram:true, alm:true, con:true }
+  },
+  C: {
+    name:'Computador PC-14', icon:'🖥️', tag:'Sala de informática',
+    specs:{ so:'Windows 10', ram:'4 GB', alm:'180 MB libres', con:'Wi-Fi institucional' },
+    cumple:{ so:true, ram:true, alm:false, con:true }
+  }
+};
+
+const explanations = {
+  so:  d => d.cumple.so  ? `${d.specs.so} cumple el sistema operativo mínimo exigido.` : `${d.specs.so} no alcanza el sistema operativo mínimo exigido.`,
+  ram: d => d.cumple.ram ? `${d.specs.ram} de RAM cumple el mínimo de 2 GB.` : `${d.specs.ram} de RAM no alcanza el mínimo de 2 GB.`,
+  alm: d => d.cumple.alm ? `${d.specs.alm} cumple el mínimo de 500 MB.` : `${d.specs.alm} no alcanza el mínimo de 500 MB requerido.`,
+  con: d => d.cumple.con ? `${d.specs.con} cumple el requisito de conexión.` : `${d.specs.con} no cumple el requisito de conexión.`
+};
+
+/* ---------------- STATE ---------------- */
+let currentStep = 'inicio';
+let activityStage = 'B'; // 'B' then 'C'
+let matchScore = { correctPairs:0, totalPairs:0 };
+let caseSolvedFirstTry = null;
+let caseAttempted = false;
+let activityInitialized = false;
+
+const stepOrder = ['inicio','exploracion','ejemplo','actividad','retro','cierre'];
+
+function announce(msg){
+  document.getElementById('live-region').textContent = msg;
+}
+
+function goTo(step){
+  currentStep = step;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+step).classList.add('active');
+
+  document.querySelectorAll('.progress .step').forEach(el=>{
+    const name = el.dataset.step;
+    el.classList.remove('active','done');
+    const idxCurrent = stepOrder.indexOf(step);
+    const idxThis = stepOrder.indexOf(name);
+    if(idxThis < idxCurrent) el.classList.add('done');
+    if(idxThis === idxCurrent) el.classList.add('active');
+  });
+
+  if(step === 'actividad' && !activityInitialized){ renderActivity(); activityInitialized = true; }
+  if(step === 'retro'){ renderCase(); }
+  if(step === 'cierre'){ renderClosing(); }
+
+  window.scrollTo({top:0, behavior:'smooth'});
+  announce('Pantalla: ' + step);
+}
+
+/* ---------------- EXPLORACION ---------------- */
+function renderDevices(){
+  const list = document.getElementById('device-list');
+  list.innerHTML = '';
+  ['A','B','C'].forEach(key=>{
+    const d = devices[key];
+    const card = document.createElement('div');
+    card.className = 'device-card';
+    card.innerHTML = `
+      <button class="device-head" aria-expanded="false" onclick="toggleDevice(this,'${key}')">
+        <span class="device-icon" aria-hidden="true">${d.icon}</span>
+        <span>
+          <span class="device-name">Dispositivo ${key} · ${d.name}</span><br>
+          <span class="device-sub">${d.tag}</span>
+        </span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="device-body" id="device-body-${key}">
+        <table class="specs">
+          <tr><td>Sistema operativo</td><td>${d.specs.so}</td></tr>
+          <tr><td>Memoria RAM</td><td>${d.specs.ram}</td></tr>
+          <tr><td>Almacenamiento libre</td><td>${d.specs.alm}</td></tr>
+          <tr><td>Conexión</td><td>${d.specs.con}</td></tr>
+        </table>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+function toggleDevice(btn, key){
+  const body = document.getElementById('device-body-'+key);
+  const open = body.classList.toggle('open');
+  btn.setAttribute('aria-expanded', open ? 'true':'false');
+}
+
+/* ---------------- EJEMPLO ---------------- */
+function renderExample(){
+  const box = document.getElementById('example-checks');
+  box.innerHTML = '';
+  const d = devices.A;
+  requirements.forEach((r,i)=>{
+    const row = document.createElement('div');
+    row.className = 'check-row';
+    row.innerHTML = `
+      <span class="check-badge">✓</span>
+      <span class="check-text"><b>${r.label}:</b> ${d.specs[r.id]}
+        <span class="expl">${explanations[r.id](d)}</span>
+      </span>`;
+    box.appendChild(row);
+    setTimeout(()=>{ row.classList.add('show','ok'); }, 250*i + 150);
+  });
+}
+
+/* ---------------- ACTIVIDAD (matching) ---------------- */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function renderActivity(){
+  activityStage = 'B';
+  matchScore = { correctPairs:0, totalPairs:0 };
+  buildActivityStage('B');
+}
+
+function buildActivityStage(key){
+  const d = devices[key];
+  document.getElementById('activity-title').textContent =
+    `Tu turno: relaciona · Dispositivo ${key} · ${d.name}`;
+  document.getElementById('activity-lead').textContent =
+    `Para cada requisito de ChatSchool, elige el dato correspondiente de este dispositivo.`;
+
+  const options = shuffle(requirements.map(r => d.specs[r.id]));
+  const box = document.getElementById('activity-matches');
+  box.innerHTML = '';
+  requirements.forEach(r=>{
+    const row = document.createElement('div');
+    row.className = 'match-row';
+    row.innerHTML = `
+      <div class="match-label">${r.label}<small>requiere: ${r.need}</small></div>
+      <div>
+        <select class="match-select" data-req="${r.id}" aria-label="Dato del dispositivo que corresponde a ${r.label}">
+          <option value="">— Selecciona —</option>
+          ${options.map(o=>`<option value="${o}">${o}</option>`).join('')}
+        </select>
+        <div class="verdict-line" id="verdict-${r.id}"></div>
+      </div>`;
+    box.appendChild(row);
+  });
+
+  document.getElementById('activity-feedback').className = 'feedback-box';
+  document.getElementById('activity-feedback').textContent = '';
+  document.getElementById('activity-conclusion').className = 'conclusion';
+  document.getElementById('btn-activity-next').disabled = true;
+  document.getElementById('btn-activity-next').textContent =
+    key === 'B' ? 'Continuar al Dispositivo C' : 'Ir al caso de incompatibilidad';
+}
+
+function verifyMatches(){
+  const key = activityStage;
+  const d = devices[key];
+  let allCorrect = true;
+  let newlyCorrect = 0;
+
+  requirements.forEach(r=>{
+    const sel = document.querySelector(`select[data-req="${r.id}"]`);
+    const verdict = document.getElementById('verdict-'+r.id);
+    const correctVal = d.specs[r.id];
+    if(sel.value === ''){ allCorrect = false; verdict.textContent=''; return; }
+    if(sel.value === correctVal){
+      sel.classList.add('correct'); sel.classList.remove('incorrect');
+      verdict.className = 'verdict-line ok';
+      verdict.textContent = (d.cumple[r.id] ? '✔ Cumple — ' : '✘ No cumple — ') + explanations[r.id](d);
+      if(!sel.dataset.counted){ sel.dataset.counted='1'; newlyCorrect++; }
+    } else {
+      sel.classList.add('incorrect'); sel.classList.remove('correct');
+      verdict.className = 'verdict-line bad';
+      verdict.textContent = 'Ese dato no corresponde a "' + r.label + '". Vuelve a intentarlo.';
+      allCorrect = false;
+    }
+  });
+
+  matchScore.correctPairs += newlyCorrect;
+  matchScore.totalPairs = 8; // 4 per device x 2 devices
+
+  const fb = document.getElementById('activity-feedback');
+  if(allCorrect){
+    fb.className = 'feedback-box show ok';
+    fb.textContent = 'Relacionaste correctamente los 4 requisitos con este dispositivo.';
+    const worksAll = requirements.every(r=>d.cumple[r.id]);
+    const conc = document.getElementById('activity-conclusion');
+    conc.className = 'conclusion show ' + (worksAll ? 'ok':'bad');
+    conc.textContent = worksAll
+      ? `Conclusión: ChatSchool SÍ funciona en el Dispositivo ${key}.`
+      : `Conclusión: ChatSchool NO funciona en el Dispositivo ${key}.`;
+    document.getElementById('btn-activity-next').disabled = false;
+  } else {
+    fb.className = 'feedback-box show bad';
+    fb.textContent = 'Revisa las relaciones marcadas en rojo y vuelve a verificar.';
+  }
+}
+
+function nextActivityStage(){
+  if(activityStage === 'B'){
+    activityStage = 'C';
+    buildActivityStage('C');
+    window.scrollTo({top:0, behavior:'smooth'});
+  } else {
+    goTo('retro');
+  }
+}
+
+/* ---------------- RETROALIMENTACION (branching) ---------------- */
+const caseOptions = [
+  { text:'Actualizar el sistema operativo a la última versión.', correct:false,
+    expl:'Actualizar el sistema operativo no libera espacio: el problema es el almacenamiento, no la versión del sistema.' },
+  { text:'Eliminar archivos temporales o programas sin uso hasta liberar al menos 500 MB.', correct:true,
+    expl:'Correcto: al liberar espacio, el almacenamiento disponible vuelve a cumplir el requisito de la aplicación.' },
+  { text:'Cambiar la conexión de Wi-Fi a datos móviles.', correct:false,
+    expl:'La conexión ya cumplía el requisito; cambiarla no soluciona la falta de almacenamiento.' }
+];
+
+function renderCase(){
+  caseAttempted = false;
+  const box = document.getElementById('options-list');
+  box.innerHTML = '';
+  caseOptions.forEach((opt,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.type = 'button';
+    btn.textContent = opt.text;
+    btn.onclick = ()=> chooseOption(i);
+    box.appendChild(btn);
+
+    const expl = document.createElement('div');
+    expl.className = 'option-expl';
+    expl.id = 'expl-'+i;
+    expl.textContent = opt.expl;
+    box.appendChild(expl);
+  });
+  document.getElementById('btn-to-cierre').disabled = true;
+}
+
+function chooseOption(i){
+  const opt = caseOptions[i];
+  const buttons = document.querySelectorAll('#options-list .option');
+  buttons.forEach((b,idx)=>{
+    b.classList.remove('chosen-correct','chosen-incorrect');
+    document.getElementById('expl-'+idx).classList.remove('show','ok','bad');
+  });
+  const btn = buttons[i];
+  const expl = document.getElementById('expl-'+i);
+
+  if(!caseAttempted){ caseSolvedFirstTry = opt.correct; caseAttempted = true; }
+
+  if(opt.correct){
+    btn.classList.add('chosen-correct');
+    expl.classList.add('show','ok');
+    document.getElementById('btn-to-cierre').disabled = false;
+    announce('Respuesta correcta. Ya puedes ir al cierre.');
+  } else {
+    btn.classList.add('chosen-incorrect');
+    expl.classList.add('show','bad');
+    announce('Respuesta incorrecta. Vuelve a intentarlo.');
+  }
+}
+
+/* ---------------- CIERRE ---------------- */
+function renderClosing(){
+  document.getElementById('score-matches').textContent = matchScore.correctPairs + '/' + matchScore.totalPairs;
+  document.getElementById('score-case').textContent = caseSolvedFirstTry === null ? '—' : (caseSolvedFirstTry ? 'Sí' : 'No');
+  const msg = document.getElementById('closing-msg');
+  if(matchScore.correctPairs === matchScore.totalPairs && caseSolvedFirstTry){
+    msg.textContent = 'Relacionaste todos los requisitos correctamente y resolviste el caso al primer intento: dominas la relación entre requisitos y componentes.';
+  } else {
+    msg.textContent = 'Completaste el recorrido. Revisa las relaciones o el caso que te tomó más de un intento antes de hacer tu diagrama de componentes.';
+  }
+}
+
+function restart(){
+  matchScore = { correctPairs:0, totalPairs:0 };
+  caseSolvedFirstTry = null;
+  caseAttempted = false;
+  activityInitialized = false;
+  goTo('inicio');
+}
+
+/* ---------------- INIT ---------------- */
+renderDevices();
+renderExample();
+goTo('inicio');
+
+</script>
+</body>
+</html>
